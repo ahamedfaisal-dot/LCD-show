@@ -260,15 +260,12 @@ fi
 # Determine rotation value for piscreen overlay
 PISCREEN_ROTATE="$ROTATION"
 
-# Find or create [all] section and add our config
-if grep -q "^\[all\]" "$CONFIG_PATH"; then
-    sed -i "/^\[all\]/a\\
-# --- MHS35 Pi5 LCD (added by MHS35-pi5-install.sh) ---\\
-dtoverlay=piscreen,speed=18000000,drm\\
-hdmi_force_hotplug=1\\
-# --- End MHS35 Pi5 LCD ---" "$CONFIG_PATH"
-else
-    cat >> "$CONFIG_PATH" << CONFIGEOF
+# Always APPEND a fresh [all] block at the end of the file rather than
+# inserting after an existing "[all]" line. Stock Raspberry Pi OS config.txt
+# contains [all] TWICE (top, and again as a reset after [cm4]) — inserting
+# with `sed '/^\[all\]/a ...'` fires on every match and silently duplicates
+# the overlay line, causing a GPIO/pin-conflict error on the second load.
+cat >> "$CONFIG_PATH" << CONFIGEOF
 
 [all]
 # --- MHS35 Pi5 LCD (added by MHS35-pi5-install.sh) ---
@@ -276,7 +273,6 @@ dtoverlay=piscreen,speed=18000000,drm
 hdmi_force_hotplug=1
 # --- End MHS35 Pi5 LCD ---
 CONFIGEOF
-fi
 
 ok "config.txt configured for Pi 5 DRM (piscreen + drm, rotation=${ROTATION}°)"
 
